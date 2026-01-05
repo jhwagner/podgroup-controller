@@ -24,6 +24,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
+
+const (
+	PodGroupNameLabel  = "pod-group.podgroup.jhwagner.github.io/name"
+	PodGroupReadyLabel = "pod-group.podgroup.jhwagner.github.io/ready"
 )
 
 // PodGroupReconciler watches Pods and manages pod groups
@@ -38,14 +44,59 @@ type PodGroupReconciler struct {
 func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	log.Info("Reconciling Pod", "name", req.Name, "namespace", req.Namespace)
+	var pod corev1.Pod
+	if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	// TODO: Implement pod group logic
-	// 1. Get the pod
-	// 2. Check if it has the pod-group label
-	// 3. If yes, find all pods in the same group
-	// 4. Check if all pods meet the condition (e.g., Running)
-	// 5. If yes, apply the action label to all pods
+	groupName, hasPodGroupLabel := pod.Labels[PodGroupNameLabel]
+	if !hasPodGroupLabel {
+		return ctrl.Result{}, nil
+	}
+
+	log.Info("Processing pod in group", "podGroup", groupName)
+
+	var podList corev1.PodList
+	if err := r.List(ctx, &podList, 
+		client.InNamespace(req.Namespace),
+		client.MatchingLabels{PodGroupNameLabel: groupName},
+	); err != nil {
+		log.Error(err, "Failed to list pods in group", "podGroup", groupName)
+		return ctrl.Result{}, err
+	}
+
+	allRunning := true
+	for _, p := range podList.Items {
+		if p.Status.Phase != corev1.PodRunning {
+			allRunning = false
+			break
+		}
+	}
+
+	if !allRunning {
+		log.Info("Not all pods running yet", "podGroup", groupName, "totalPods", len(podList.Items))
+		return ctrl.Result{}, nil
+	}
+
+	log.Info("All pods running, applying ready label", "podGroup", groupName, "totalPods", len(podList.Items))
+
+	for _, p := range podList.Items {
+		if p.Labels[PodGroupReadyLabel] == "true" {
+			continue
+		}
+
+		podCopy := p.DeepCopy()
+		if podCopy.Labels == nil {
+			podCopy.Labels = make(map[string]string)
+		}
+		podCopy.Labels[PodGroupReadyLabel] = "true"
+
+		if err := r.Update(ctx, podCopy); err != nil {
+			log.Error(err, "Failed to update pod", "pod", p.Name)
+			return ctrl.Result{}, err
+		}
+		log.Info("Applied ready label", "pod", p.Name, "podGroup", groupName)
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -54,5 +105,10 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *PodGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
+		WithEventFilter(predicate.NewPredicateFuncs(func(object client.Object) bool {
+			pod := object.(*corev1.Pod)
+			_, hasPodGroupLabel := pod.Labels[PodGroupNameLabel]
+			return hasPodGroupLabel
+		})).
 		Complete(r)
 }
