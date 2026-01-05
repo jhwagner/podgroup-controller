@@ -1,121 +1,110 @@
 # pod-group-controller
-// TODO(user): Add simple overview of use/purpose
+
+A Kubernetes controller that manages pod groups, waiting for all pods in a group to reach a specified condition before taking action. Designed for simulating gang scheduling with KWOK.
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+
+This controller watches Pods labeled with a pod group identifier and applies a "ready" label once all pods in the group reach the Running state. This is useful for:
+
+- **Gang Scheduling Simulations**: Combined with KWOK, simulate ML training workloads where all pods must be running before work begins
+- **Multi-pod Coordination**: Coordinate actions across related pods (Jobs, JobSets, StatefulSets, etc.)
+- **Deadlock Demonstrations**: Show what happens when partial scheduling blocks cluster resources
+
+### How It Works
+
+1. Label your pods with `pod-group.podgroup.jhwagner.github.io/name=<group-name>`
+2. The controller watches for pods with this label
+3. When all pods in a group are Running, it applies `pod-group.podgroup.jhwagner.github.io/ready=true` to each pod
+4. KWOK stages can then select on this label to transition pods to completion
+
+### Example
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: worker-1
+  labels:
+    pod-group.podgroup.jhwagner.github.io/name: training-job-1
+spec:
+  containers:
+  - name: worker
+    image: fake-image
+```
+
+Once all pods with `pod-group.podgroup.jhwagner.github.io/name: training-job-1` are Running, the controller adds:
+```yaml
+labels:
+  pod-group.podgroup.jhwagner.github.io/ready: "true"
+```
 
 ## Getting Started
 
 ### Prerequisites
-- go version v1.24.6+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
+- go version v1.23+
+- docker version 17.03+
+- kubectl version v1.11.3+
+- Access to a Kubernetes v1.11.3+ cluster
+
+### To Run Locally
+
+For development and testing with your local kubeconfig:
+
+```sh
+make run
+```
 
 ### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+
+**NOTE:** This controller doesn't require CRDs since it watches built-in Pod resources.
+
+**Build and push your image:**
 
 ```sh
 make docker-build docker-push IMG=<some-registry>/pod-group-controller:tag
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
-
-**Install the CRDs into the cluster:**
-
-```sh
-make install
-```
-
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+**Deploy the controller:**
 
 ```sh
 make deploy IMG=<some-registry>/pod-group-controller:tag
 ```
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
-
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
-
-```sh
-kubectl apply -k config/samples/
-```
-
->**NOTE**: Ensure that the samples has default values to test it out.
-
 ### To Uninstall
-**Delete the instances (CRs) from the cluster:**
-
-```sh
-kubectl delete -k config/samples/
-```
-
-**Delete the APIs(CRDs) from the cluster:**
-
-```sh
-make uninstall
-```
-
-**UnDeploy the controller from the cluster:**
 
 ```sh
 make undeploy
 ```
 
-## Project Distribution
+## Usage with KWOK
 
-Following the options to release and provide this solution to the users.
+1. Deploy this controller to your cluster
+2. Create a KWOK stage that waits for the ready label:
 
-### By providing a bundle with all YAML files
-
-1. Build the installer for the image built and published in the registry:
-
-```sh
-make build-installer IMG=<some-registry>/pod-group-controller:tag
+```yaml
+apiVersion: kwok.x-k8s.io/v1alpha1
+kind: Stage
+metadata:
+  name: pod-complete-on-ready
+spec:
+  resourceRef:
+    apiGroup: v1
+    kind: Pod
+  selector:
+    matchLabels:
+      pod-group.podgroup.jhwagner.github.io/ready: "true"
+  next:
+    statusTemplate: |
+      {{ $now := Now }}
+      conditions:
+      - lastTransitionTime: {{ $now }}
+        status: "True"
+        type: Ready
+      phase: Succeeded
 ```
 
-**NOTE:** The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without its
-dependencies.
-
-2. Using the installer
-
-Users can just run 'kubectl apply -f <URL for YAML BUNDLE>' to install
-the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/pod-group-controller/<tag or branch>/dist/install.yaml
-```
-
-### By providing a Helm Chart
-
-1. Build the chart using the optional helm plugin
-
-```sh
-kubebuilder edit --plugins=helm/v2-alpha
-```
-
-2. See that a chart was generated under 'dist/chart', and users
-can obtain this solution from there.
-
-**NOTE:** If you change the project, you need to update the Helm Chart
-using the same command above to sync the latest changes. Furthermore,
-if you create webhooks, you need to use the above command with
-the '--force' flag and manually ensure that any custom configuration
-previously added to 'dist/chart/values.yaml' or 'dist/chart/manager/manager.yaml'
-is manually re-applied afterwards.
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-**NOTE:** Run `make help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+3. Create pods with the pod-group label (e.g., via JobSet, Job, or StatefulSet)
+4. The controller will mark them ready once all are Running, then KWOK will complete them
 
 ## License
 
@@ -132,4 +121,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
