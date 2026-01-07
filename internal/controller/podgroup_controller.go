@@ -23,7 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
@@ -42,7 +42,7 @@ type PodGroupReconciler struct {
 // +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get
 
 func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx)
+	log := logf.FromContext(ctx)
 
 	var pod corev1.Pod
 	if err := r.Get(ctx, req.NamespacedName, &pod); err != nil {
