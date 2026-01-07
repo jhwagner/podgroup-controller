@@ -15,7 +15,7 @@ This controller watches Pods labeled with a pod group identifier and applies a "
 1. Label your pods with `pod-group.podgroup.jhwagner.github.io/name=<group-name>`
 2. The controller watches for pods with this label
 3. When all pods in a group are Running, it applies `pod-group.podgroup.jhwagner.github.io/ready=true` to each pod
-4. KWOK stages can then select on this label to transition pods to completion
+4. (optional) KWOK stages can then select on this label to transition pods to completion
 
 ### Example
 
@@ -38,15 +38,30 @@ labels:
   pod-group.podgroup.jhwagner.github.io/ready: "true"
 ```
 
-## Getting Started
+## Installation
+
+### Quick Install
+
+Deploy the latest version to your cluster:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/jhwagner/pod-group-controller/main/dist/install.yaml
+```
+
+### Uninstall
+
+```sh
+kubectl delete -f https://raw.githubusercontent.com/jhwagner/pod-group-controller/main/dist/install.yaml
+```
+
+## Development
 
 ### Prerequisites
 - go version v1.23+
-- docker version 17.03+
-- kubectl version v1.11.3+
-- Access to a Kubernetes v1.11.3+ cluster
+- kubectl and access to a Kubernetes cluster
+- docker (for building images)
 
-### To Run Locally
+### Run Locally
 
 For development and testing with your local kubeconfig:
 
@@ -54,26 +69,12 @@ For development and testing with your local kubeconfig:
 make run
 ```
 
-### To Deploy on the cluster
-
-**NOTE:** This controller doesn't require CRDs since it watches built-in Pod resources.
-
-**Build and push your image:**
+### Build and Deploy
 
 ```sh
-make docker-build docker-push IMG=<some-registry>/pod-group-controller:tag
-```
-
-**Deploy the controller:**
-
-```sh
-make deploy IMG=<some-registry>/pod-group-controller:tag
-```
-
-### To Uninstall
-
-```sh
-make undeploy
+make docker-build IMG=<your-registry>/pod-group-controller:tag
+make docker-push IMG=<your-registry>/pod-group-controller:tag
+make deploy IMG=<your-registry>/pod-group-controller:tag
 ```
 
 ## Usage with KWOK

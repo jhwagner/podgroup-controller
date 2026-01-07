@@ -57,7 +57,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	log.Info("Processing pod in group", "podGroup", groupName)
 
 	var podList corev1.PodList
-	if err := r.List(ctx, &podList, 
+	if err := r.List(ctx, &podList,
 		client.InNamespace(req.Namespace),
 		client.MatchingLabels{PodGroupNameLabel: groupName},
 	); err != nil {
