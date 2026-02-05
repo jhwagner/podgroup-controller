@@ -1,4 +1,4 @@
-# pod-group-controller
+# podgroup-controller
 
 A Kubernetes controller that manages pod groups, waiting for all pods in a group to reach a specified condition before taking action. Designed for simulating gang scheduling with KWOK.
 
@@ -12,9 +12,9 @@ This controller watches Pods labeled with a pod group identifier and applies a "
 
 ### How It Works
 
-1. Label your pods with `pod-group.podgroup.jhwagner.github.io/name=<group-name>`
+1. Label your pods with `podgroup.jhwagner.github.io/name=<group-name>`
 2. The controller watches for pods with this label
-3. When all pods in a group are Running, it applies `pod-group.podgroup.jhwagner.github.io/ready=true` to each pod
+3. When all pods in a group are Running, it applies `podgroup.jhwagner.github.io/ready=true` to each pod
 4. (optional) KWOK stages can then select on this label to transition pods to completion
 
 ### Example
@@ -25,17 +25,17 @@ kind: Pod
 metadata:
   name: worker-1
   labels:
-    pod-group.podgroup.jhwagner.github.io/name: training-job-1
+    podgroup.jhwagner.github.io/name: training-job-1
 spec:
   containers:
   - name: worker
     image: fake-image
 ```
 
-Once all pods with `pod-group.podgroup.jhwagner.github.io/name: training-job-1` are Running, the controller adds:
+Once all pods with `podgroup.jhwagner.github.io/name: training-job-1` are Running, the controller adds:
 ```yaml
 labels:
-  pod-group.podgroup.jhwagner.github.io/ready: "true"
+  podgroup.jhwagner.github.io/ready: "true"
 ```
 
 ## Installation
@@ -45,13 +45,13 @@ labels:
 Deploy the latest version to your cluster:
 
 ```sh
-kubectl apply -f https://raw.githubusercontent.com/jhwagner/pod-group-controller/main/dist/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/jhwagner/podgroup-controller/main/dist/install.yaml
 ```
 
 ### Uninstall
 
 ```sh
-kubectl delete -f https://raw.githubusercontent.com/jhwagner/pod-group-controller/main/dist/install.yaml
+kubectl delete -f https://raw.githubusercontent.com/jhwagner/podgroup-controller/main/dist/install.yaml
 ```
 
 ## Development
@@ -72,9 +72,9 @@ make run
 ### Build and Deploy
 
 ```sh
-make docker-build IMG=<your-registry>/pod-group-controller:tag
-make docker-push IMG=<your-registry>/pod-group-controller:tag
-make deploy IMG=<your-registry>/pod-group-controller:tag
+make docker-build IMG=<your-registry>/podgroup-controller:tag
+make docker-push IMG=<your-registry>/podgroup-controller:tag
+make deploy IMG=<your-registry>/podgroup-controller:tag
 ```
 
 ## Usage with KWOK
@@ -93,7 +93,7 @@ spec:
     kind: Pod
   selector:
     matchLabels:
-      pod-group.podgroup.jhwagner.github.io/ready: "true"
+      podgroup.jhwagner.github.io/ready: "true"
   next:
     statusTemplate: |
       {{ $now := Now }}
@@ -104,7 +104,7 @@ spec:
       phase: Succeeded
 ```
 
-3. Create pods with the pod-group label (e.g., via JobSet, Job, or StatefulSet)
+3. Create pods with the podgroup label (e.g., via JobSet, Job, or StatefulSet)
 4. The controller will mark them ready once all are Running, then KWOK will complete them
 
 ## License

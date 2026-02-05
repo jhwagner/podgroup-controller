@@ -28,8 +28,8 @@ import (
 )
 
 const (
-	PodGroupNameLabel  = "pod-group.podgroup.jhwagner.github.io/name"
-	PodGroupReadyLabel = "pod-group.podgroup.jhwagner.github.io/ready"
+	PodGroupNameLabel  = "podgroup.jhwagner.github.io/name"
+	PodGroupReadyLabel = "podgroup.jhwagner.github.io/ready"
 )
 
 // PodGroupReconciler watches Pods and manages pod groups

@@ -6,6 +6,6 @@ cliVersion: 4.10.1
 domain: podgroup.jhwagner.github.io
 layout:
 - go.kubebuilder.io/v4
-projectName: pod-group-controller
-repo: github.com/jhwagner/pod-group-controller
+projectName: podgroup-controller
+repo: github.com/jhwagner/podgroup-controller
 version: "3"

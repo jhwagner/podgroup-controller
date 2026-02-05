@@ -35,7 +35,7 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/jhwagner/pod-group-controller/internal/controller"
+	"github.com/jhwagner/podgroup-controller/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 
