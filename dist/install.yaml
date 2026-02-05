@@ -3,27 +3,27 @@ kind: Namespace
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
+    app.kubernetes.io/name: podgroup-controller
     control-plane: controller-manager
-  name: pod-group-controller-system
+  name: podgroup-controller-system
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
-  name: pod-group-controller-controller-manager
-  namespace: pod-group-controller-system
+    app.kubernetes.io/name: podgroup-controller
+  name: podgroup-controller-controller-manager
+  namespace: podgroup-controller-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
-  name: pod-group-controller-leader-election-role
-  namespace: pod-group-controller-system
+    app.kubernetes.io/name: podgroup-controller
+  name: podgroup-controller-leader-election-role
+  namespace: podgroup-controller-system
 rules:
 - apiGroups:
   - ""
@@ -60,7 +60,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: pod-group-controller-manager-role
+  name: podgroup-controller-manager-role
 rules:
 - apiGroups:
   - ""
@@ -82,7 +82,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: pod-group-controller-metrics-auth-role
+  name: podgroup-controller-metrics-auth-role
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -100,7 +100,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: pod-group-controller-metrics-reader
+  name: podgroup-controller-metrics-reader
 rules:
 - nonResourceURLs:
   - /metrics
@@ -112,56 +112,56 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
-  name: pod-group-controller-leader-election-rolebinding
-  namespace: pod-group-controller-system
+    app.kubernetes.io/name: podgroup-controller
+  name: podgroup-controller-leader-election-rolebinding
+  namespace: podgroup-controller-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: pod-group-controller-leader-election-role
+  name: podgroup-controller-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: pod-group-controller-controller-manager
-  namespace: pod-group-controller-system
+  name: podgroup-controller-controller-manager
+  namespace: podgroup-controller-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
-  name: pod-group-controller-manager-rolebinding
+    app.kubernetes.io/name: podgroup-controller
+  name: podgroup-controller-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: pod-group-controller-manager-role
+  name: podgroup-controller-manager-role
 subjects:
 - kind: ServiceAccount
-  name: pod-group-controller-controller-manager
-  namespace: pod-group-controller-system
+  name: podgroup-controller-controller-manager
+  namespace: podgroup-controller-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: pod-group-controller-metrics-auth-rolebinding
+  name: podgroup-controller-metrics-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: pod-group-controller-metrics-auth-role
+  name: podgroup-controller-metrics-auth-role
 subjects:
 - kind: ServiceAccount
-  name: pod-group-controller-controller-manager
-  namespace: pod-group-controller-system
+  name: podgroup-controller-controller-manager
+  namespace: podgroup-controller-system
 ---
 apiVersion: v1
 kind: Service
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
+    app.kubernetes.io/name: podgroup-controller
     control-plane: controller-manager
-  name: pod-group-controller-controller-manager-metrics-service
-  namespace: pod-group-controller-system
+  name: podgroup-controller-controller-manager-metrics-service
+  namespace: podgroup-controller-system
 spec:
   ports:
   - name: https
@@ -169,7 +169,7 @@ spec:
     protocol: TCP
     targetPort: 8443
   selector:
-    app.kubernetes.io/name: pod-group-controller
+    app.kubernetes.io/name: podgroup-controller
     control-plane: controller-manager
 ---
 apiVersion: apps/v1
@@ -177,22 +177,22 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: pod-group-controller
+    app.kubernetes.io/name: podgroup-controller
     control-plane: controller-manager
-  name: pod-group-controller-controller-manager
-  namespace: pod-group-controller-system
+  name: podgroup-controller-controller-manager
+  namespace: podgroup-controller-system
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: pod-group-controller
+      app.kubernetes.io/name: podgroup-controller
       control-plane: controller-manager
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
       labels:
-        app.kubernetes.io/name: pod-group-controller
+        app.kubernetes.io/name: podgroup-controller
         control-plane: controller-manager
     spec:
       containers:
@@ -202,7 +202,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: ghcr.io/jhwagner/pod-group-controller:main
+        image: ghcr.io/jhwagner/podgroup-controller:main
         livenessProbe:
           httpGet:
             path: /healthz
@@ -235,6 +235,6 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      serviceAccountName: pod-group-controller-controller-manager
+      serviceAccountName: podgroup-controller-controller-manager
       terminationGracePeriodSeconds: 10
       volumes: []
